@@ -51,7 +51,9 @@ private:
      * Size of one allocated memory block
      */
     const static size_t BLOCK_SIZE = 512*1024*1024;
+    //const static size_t BLOCK_SIZE = 1024*1024*1024;
     const static osmium::object_id_type EST_MAX_NODE_ID = 2^31; // soon 2^32
+    //const static osmium::object_id_type EST_MAX_NODE_ID = 2^32; // soon 2^32
     const static osmium::object_id_type NODE_BUFFER_STEPS = 2^16; // soon 2^32
 
     typedef std::vector< char* > memoryBlocks_t;
@@ -256,6 +258,12 @@ public:
             std::cout << "lookup for timemap of node #" << id << std::endl;
         }
 
+        if (id >= idMap.size()) {
+            std::cerr << "  -> over memory position, skipping" << std::endl;
+            found = false;
+            return timemap_ptr();
+        }
+
         if(!idMap.test(id)) {
             if(isPrintingStoreErrors()) {
                 std::cerr << "  -> no memory position assigned for node, skipping" << std::endl;
@@ -294,6 +302,12 @@ public:
     Nodeinfo lookup(osmium::object_id_type id, time_t t, bool &found) {
         if(isPrintingStoreErrors()) {
             std::cout << "lookup for coords of oldest node #" << id << " younger-or-equal then " << t << " (" << Timestamp::format(t) << ")" << std::endl;
+        }
+
+        if (id >= idMap.size()) {
+            std::cerr << "  -> over memory position, skipping" << std::endl;
+            found = false;
+            return nullinfo;
         }
 
         if(!idMap.test(id)) {

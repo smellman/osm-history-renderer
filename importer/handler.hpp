@@ -3,6 +3,8 @@
 
 #include <fstream>
 #include <map>
+#include <stdio.h>
+#include <string.h>
 
 #include <libpq-fe.h>
 
@@ -68,11 +70,17 @@ private:
 
 
     void write_node() {
+
         const osmium::Node& next = m_node_tracker.next();
         const osmium::Node& cur = m_node_tracker.cur();
-
+        const osmium::object_id_type cur_id = cur.id();
         if(m_debug) {
             std::cout << "node n" << cur.id() << 'v' << cur.version() << " at tstamp " << cur.timestamp() << " (" << cur.timestamp().to_iso() << ")" << std::endl;
+        }
+
+        // invalid data
+        if(cur.id() < 0) {
+            return;
         }
 
         std::string valid_from(cur.timestamp().to_iso());
@@ -91,10 +99,16 @@ private:
         // some xml-writers write deleted nodes without corrdinates, some write 0/0 as coorinate
         // default to 0/0 for those input nodes which dosn't carry corrdinates with them
         double lon = 0, lat = 0;
-        if(cur.location() && cur.location().lon() && cur.location().lat())
+        if(cur.location() && cur.location().valid())
         {
             lon = cur.location().lon();
             lat = cur.location().lat();
+        }
+
+        // invalid error
+        if (cur_id != cur.id()) {
+            std::cerr << "node id is invalid before " << cur_id << " to " << cur.id() << " after or before check location " << std::endl;
+            return;
         }
 
         // if this node is not-deleted (ie visible), write it to the nodestore
@@ -110,6 +124,12 @@ private:
         if(!m_keepLatLng) {
             if(!Project::toMercator(&lon, &lat))
                 return;
+        }
+
+        // invalid error
+        if (cur_id != cur.id()) {
+            std::cerr << "node id is invalid before " << cur_id << " to " << cur.id() << " before write data " << std::endl;
+            return;
         }
 
         // SPEED: sum up 64k of data, before sending them to the database

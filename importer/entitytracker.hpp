@@ -19,7 +19,9 @@ template <class TObject>
 class ObjectWrapper {
     const TObject& object;
 public:
-    ObjectWrapper(const TObject& object) : object(object) {}
+    ObjectWrapper(const TObject& ref) : object(ref) {
+        //std::cout << "Object: " << object.id() << std::endl;
+    }
 
     const TObject& obj() {
         return object;
@@ -40,22 +42,32 @@ private:
      * object of the current entity
      */
     ObjectWrapper<TObject> *m_prev;
+    //osmium::object_id_type m_prev_id;
 
     /**
      * object of the current entity
      */
     ObjectWrapper<TObject> *m_cur;
+    //osmium::object_id_type m_cur_id;
 
     /**
      * object of the next entity
      */
     ObjectWrapper<TObject> *m_next;
+    //osmium::object_id_type m_next_id;
 
 public:
     EntityTracker() {
+
         m_prev = nullptr;
         m_cur = nullptr;
         m_next = nullptr;
+
+        /*
+        m_prev_id = 0;
+        m_cur_id = 0;
+        m_next_id = 0;
+        */
     }
 
     /**
@@ -83,21 +95,24 @@ public:
      * returns if the tracker currently tracks a previous entity
      */
     bool has_prev() {
-        return m_prev;
+        return m_prev != nullptr;
+        //return m_prev;
     }
 
     /**
      * returns if the tracker currently tracks a current entity
      */
     bool has_cur() {
-        return m_cur;
+        return m_cur != nullptr;
+        //return m_cur;
     }
 
     /**
      * returns if the tracker currently tracks a "next" entity
      */
     bool has_next() {
-        return m_next;
+        return m_next != nullptr;
+        //return m_next;
     }
 
     /**
@@ -126,6 +141,8 @@ public:
     void feed(const TObject& obj) {
         assert(!m_next);
         m_next = new ObjectWrapper<TObject>(obj);
+        //m_next_id = m_next->obj().id();
+        //std::cout << "feed m_prev_id: " << m_prev_id << " m_cur_id: " << m_cur_id << " m_next_id: " << m_next_id << std::endl;
     }
 
     /**
@@ -133,9 +150,35 @@ public:
      * clear the next entity pointer
      */
     void swap() {
-        m_prev = m_cur;
-        m_cur = m_next;
+        //m_prev = m_cur;
+        delete m_prev;
+
+        if (m_cur != nullptr) {
+            m_prev = new ObjectWrapper<TObject>(m_cur->obj());
+        } else {
+            m_prev = nullptr;
+        }
+        /*
+        if (m_prev != nullptr) {
+            m_prev_id = m_prev->obj().id();
+        }*/
+        delete m_cur;
+        //m_cur = m_next;
+
+        if (m_next != nullptr) {
+            m_cur = new ObjectWrapper<TObject>(m_next->obj());
+        } else {
+            m_cur = nullptr;
+        }
+        /*
+        if (m_cur != nullptr) {
+            m_cur_id = m_cur->obj().id();
+        }
+        */
+        delete m_next;
         m_next = nullptr;
+        //m_next_id = 0;
+        //std::cout << "swap m_prev_id: " << m_prev_id << " m_cur_id: " << m_cur_id << " m_next_id: " << m_next_id << std::endl;
     }
 };
 

@@ -35,10 +35,12 @@ public:
         std::vector<geos::geom::Coordinate> *c = new std::vector<geos::geom::Coordinate>();
 
         // iterate over all nodes
-        osmium::WayNodeList::const_iterator end = nodes.end();
-        for(osmium::WayNodeList::const_iterator it = nodes.begin(); it != end; ++it) {
+        //osmium::WayNodeList::const_iterator end = nodes.end();
+        //for(osmium::WayNodeList::const_iterator it = nodes.begin(); it != end; ++it) {
+        for (const auto& node_ref : nodes) {
             // the id
-            osmium::object_id_type id = it->ref();
+            //osmium::object_id_type id = it->ref();
+            osmium::object_id_type id = node_ref.ref();
 
             // was the node found in the store?
             bool found;

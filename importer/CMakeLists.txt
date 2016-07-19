@@ -37,7 +37,7 @@ set(AUTHOR "Peter Körner <osm@mazdermind.de>")
 #-----------------------------------------------------------------------------
 
 find_package(GEOS)
-find_package(Osmium COMPONENTS io proj)
+find_package(Osmium COMPONENTS io proj sparsehash)
 find_package(PostgreSQL REQUIRED)
 include_directories(${OSMIUM_INCLUDE_DIRS})
 include_directories(${PostgreSQL_INCLUDE_DIR})
@@ -116,10 +116,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg")
 #-----------------------------------------------------------------------------
 
 add_executable(osm-history-importer importer.cpp handler.hpp entitytracker.hpp nodestore.hpp nodestore/stl.hpp nodestore/sparse.hpp polygonidentifyer.hpp zordercalculator.hpp sorttest.hpp project.hpp)
-message("DEBUG: PGLIB=${PostgreSQL_LIBRARY}")
-message("DEBUG: PROJ4_LIB=${PROJ4_LIBRARY}")
-message("DEBUG: GEOS_LIBRARY=${GEOS_LIBRARY}")
-message("DEBUG: OSMIUM_LIBRARIES=${OSMIUM_LIBRARIES}")
 target_link_libraries(osm-history-importer ${OSMIUM_LIBRARIES} ${PostgreSQL_LIBRARY} ${GEOS_LIBRARY})
 # need copy and fix path scheme before install
 # install(TARGETS osm-history-importer DESTINATION bin)

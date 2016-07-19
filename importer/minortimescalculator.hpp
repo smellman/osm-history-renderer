@@ -30,8 +30,10 @@ public:
     std::vector<MinorTimesInfo> *forWay(const osmium::WayNodeList &nodes, time_t from, time_t to) {
         std::vector<MinorTimesInfo> *minor_times = new std::vector<MinorTimesInfo>();
 
-        for(osmium::WayNodeList::const_iterator nodeit = nodes.begin(); nodeit != nodes.end(); nodeit++) {
-            osmium::object_id_type id = nodeit->ref();
+        //for(osmium::WayNodeList::const_iterator nodeit = nodes.begin(); nodeit != nodes.end(); nodeit++) {
+        for(const auto& node_ref : nodes) {
+            //osmium::object_id_type id = nodeit->ref();
+            osmium::object_id_type id = node_ref.ref();
 
             bool found = false;
             Nodestore::timemap_ptr tmap = m_nodestore->lookup(id, found);
