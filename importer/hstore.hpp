@@ -26,12 +26,15 @@ private:
         // SPEED: instead of stringstream, which does dynamic allocation, use a fixed buffer
         std::stringstream escaped;
 
+        /*
         if (str == NULL) {
             return escaped.str();
         }
+        */
 
+        int len = strlen(str);
         // iterate over all chars, one by one
-        for(int i = 0; ; i++) {
+        for(int i = 0; i < len; i++) {
             // the current char
             //std::cout << i << std::endl;
             char c = str[i];
@@ -60,6 +63,7 @@ private:
                     break;
             }
         }
+        return escaped.str();
     }
 
 public:
@@ -73,6 +77,7 @@ public:
         const char* separator = "";
 
         // iterate over all tags
+        /*
         for(auto it = tags.begin(); it != tags.end(); ++it) {
             // escape key and value
             //std::cout << it->key() << ":" << it->value() << std::endl;
@@ -84,6 +89,19 @@ public:
             hstore << separator << '"' << k << "\"=>\"" << v << '"';
             // if necessary, add a delimiter
             separator = ",";
+        }*/
+        for(const auto& tag : tags) {
+            // escape key and value
+            //std::cout << it->key() << ":" << it->value() << std::endl;
+
+            std::string k = escape(tag.key());
+            std::string v = escape(tag.value());
+
+            // add to string representation
+            hstore << separator << '"' << k << "\"=>\"" << v << '"';
+            // if necessary, add a delimiter
+            separator = ",";
+
         }
 
         // return the generated string
