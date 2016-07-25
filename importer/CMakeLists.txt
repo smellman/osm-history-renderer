@@ -8,6 +8,8 @@
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../fmt")
+#add_subdirectory("../fmt")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -115,7 +117,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg")
 
 #-----------------------------------------------------------------------------
 
-add_executable(osm-history-importer importer.cpp handler.hpp entitytracker.hpp nodestore.hpp nodestore/stl.hpp nodestore/sparse.hpp polygonidentifyer.hpp zordercalculator.hpp sorttest.hpp project.hpp)
+include_directories("../fmt")
+add_executable(osm-history-importer importer.cpp handler.hpp entitytracker.hpp nodestore.hpp nodestore/stl.hpp nodestore/sparse.hpp polygonidentifyer.hpp zordercalculator.hpp sorttest.hpp project.hpp ../fmt/fmt/format.cc)
 target_link_libraries(osm-history-importer ${OSMIUM_LIBRARIES} ${PostgreSQL_LIBRARY} ${GEOS_LIBRARY})
 # need copy and fix path scheme before install
 # install(TARGETS osm-history-importer DESTINATION bin)

@@ -28,6 +28,8 @@
 #include <geos/geom/PrecisionModel.h>
 #include <geos/util/GEOSException.h>
 
+#include <fmt/format.h>
+
 #include "dbconn.hpp"
 #include "dbcopyconn.hpp"
 #include "dbadapter.hpp"
@@ -60,6 +62,8 @@ private:
 
     DbConn m_general;
     DbCopyConn m_point, m_line, m_polygon;
+    std::string s_point, s_line, s_polygon;
+    std::vector<std::string> v_point, v_line, v_polygon;
 
     geos::io::WKBWriter wkb;
 
@@ -69,6 +73,7 @@ private:
     std::map<osmium::user_id_type, std::string> m_username_map;
     typedef std::pair<osmium::user_id_type, std::string> username_pair_t;
 
+    const static size_t DB_CACHE_STRING_SIZE = 64*1024; //64kb
 
     void write_node() {
 
@@ -78,6 +83,7 @@ private:
         if(m_debug) {
             std::cout << "node n" << cur.id() << 'v' << cur.version() << " at tstamp " << cur.timestamp() << " (" << cur.timestamp().to_iso() << ")" << std::endl;
         }
+        //std::cout << "node n" << cur.id() << 'v' << cur.version() << " at tstamp " << cur.timestamp() << " (" << cur.timestamp().to_iso() << ")" << std::endl;
 
         // invalid data
         if(cur.id() < 0) {
@@ -135,6 +141,7 @@ private:
 
         // SPEED: sum up 64k of data, before sending them to the database
         // SPEED: instead of stringstream, which does dynamic allocation, use a fixed buffer and snprintf
+        /*
         std::stringstream line;
         line << std::setprecision(8) <<
             cur.id() << '\t' <<
@@ -154,6 +161,34 @@ private:
 
         line << '\n';
         m_point.copy(line.str());
+        */
+        fmt::MemoryWriter w;
+        w << /*std::setprecision(8) <<*/
+            cur.id() << '\t' <<
+            cur.version() << '\t' <<
+            (cur.visible() ? 't' : 'f') << '\t' <<
+            cur.uid() << '\t' <<
+            DbCopyConn::escape_string(cur.user()) << '\t' <<
+            valid_from << '\t' <<
+            valid_to << '\t' <<
+            HStore::format(cur.tags()) << '\t';
+
+        if(cur.visible()) {
+            w << "SRID=900913;POINT(" << lon << ' ' << lat << ')';
+        } else {
+            w << "\\N";
+        }
+
+        w << '\n';
+        /*
+        s_point += w.str();
+        if (s_point.size() > DB_CACHE_STRING_SIZE) {
+            //std::cout << "write" << std::endl;
+            m_point.copy(s_point);
+            s_point = std::string();
+        }
+        */
+        m_point.copy(w.str());
     }
 
     void write_way() {
@@ -289,8 +324,9 @@ private:
 
         // SPEED: sum up 64k of data, before sending them to the database
         // SPEED: instead of stringstream, which does dynamic allocation, use a fixed buffer and snprintf
-        std::stringstream line;
-        line << std::setprecision(8) <<
+        //std::stringstream line;
+        fmt::MemoryWriter line;
+        line << /* std::setprecision(8) << */
             id << '\t' <<
             version << '\t' <<
             minor << '\t' <<
@@ -324,9 +360,11 @@ private:
                 if(geom->getGeometryTypeId() == geos::geom::GEOS_POLYGON) {
                     line << /*area*/ "0\t" << /* geom */ "\\N\t" << /* center */ "\\N\n";
                     m_polygon.copy(line.str());
+                    ////s_polygon += line.str();
                 } else {
                     line << /* geom */ "\\N\n";
                     m_line.copy(line.str());
+                    ////s_line += line.str();
                 }
             }
         }
@@ -337,7 +375,10 @@ private:
             line << poly->getArea() << '\t';
 
             // write geometry to polygon table
-            wkb.writeHEX(*geom, line);
+            std::stringstream line2;
+            //wkb.writeHEX(*geom, line);
+            wkb.writeHEX(*geom, line2);
+            line << line2.str();
             line << '\t';
 
             // calculate interior point
@@ -363,15 +404,29 @@ private:
 
             line << '\n';
             m_polygon.copy(line.str());
+            ////s_polygon += line.str();
         } else {
             // a linestring, write geometry to line-table
-            wkb.writeHEX(*geom, line);
+            std::stringstream line2;
+            //wkb.writeHEX(*geom, line);
+            wkb.writeHEX(*geom, line2);
+            line << line2.str();
 
             line << '\n';
             m_line.copy(line.str());
+            ////s_line += line.str();
 
         }
         delete geom;
+        /*
+        if (s_line.size() > DB_CACHE_STRING_SIZE) {
+            m_line.copy(s_line);
+            s_line = std::string();
+        }
+        if (s_polygon.size() > DB_CACHE_STRING_SIZE) {
+            m_polygon.copy(s_polygon);
+            s_polygon = std::string();
+        }*/
     }
 
 public:
@@ -409,6 +464,10 @@ public:
         m_point.open(m_dsn, m_prefix, "point");
         m_line.open(m_dsn, m_prefix, "line");
         m_polygon.open(m_dsn, m_prefix, "polygon");
+
+        s_point = std::string();
+        s_line = std::string();
+        s_polygon = std::string();
 
         wkb.setIncludeSRID(true);
     }
@@ -471,6 +530,16 @@ public:
         // TODO run after_ways and after_nodes
         //after_ways();
         //after_nodes();
+        /*
+        if (s_point.size() > 0) {
+            m_point.copy(s_point);
+        }
+        if (s_line.size() > 0) {
+            m_line.copy(s_line);
+        }
+        if (s_polygon.size() > 0) {
+            m_polygon.copy(s_polygon);
+        }*/
 
         std::cerr << "closing point-table..." << std::endl;
         m_point.close();

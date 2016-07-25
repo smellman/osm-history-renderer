@@ -24,7 +24,8 @@ private:
      */
     static std::string escape(const char* str) {
         // SPEED: instead of stringstream, which does dynamic allocation, use a fixed buffer
-        std::stringstream escaped;
+        //std::stringstream escaped;
+        fmt::MemoryWriter escaped;
 
         /*
         if (str == NULL) {
@@ -72,7 +73,8 @@ public:
      */
     static std::string format(const osmium::TagList& tags) {
         // SPEED: instead of stringstream, which does dynamic allocation, use a fixed buffer
-        std::stringstream hstore;
+        //std::stringstream hstore;
+        fmt::MemoryWriter hstore;
         // first separator is empty string
         const char* separator = "";
 
